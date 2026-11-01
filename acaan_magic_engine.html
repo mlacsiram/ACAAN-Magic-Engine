@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACAAN - Any Card At Any Number</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cinzel & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --gold: #dfb15b;
+      --gold-dark: #b88628;
+      --felt: #0c1a16;
+      --felt-accent: #132a24;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 50% 30%, #152c24 0%, #0a1411 75%, #050a08 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+    
+    /* Golden glow and borders */
+    .border-gold {
+      border-color: rgba(223, 177, 91, 0.4);
+    }
+    .glow-gold {
+      box-shadow: 0 0 25px rgba(223, 177, 91, 0.25);
+    }
+    .glow-card {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(223, 177, 91, 0.4);
+    }
+
+    /* 3D Card Flip Perspective */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Bicycle card back pattern via SVG background */
+    .card-back-pattern {
+      background-color: #991b1b;
+      background-image: radial-gradient(#dc2626 15%, transparent 16%), radial-gradient(#7f1d1d 15%, transparent 16%);
+      background-size: 14px 14px;
+      background-position: 0 0, 7px 7px;
+      border: 6px solid #f8fafc;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 20, 17, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(223, 177, 91, 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(223, 177, 91, 0.6);
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between min-h-screen">
+
+  <!-- TOP BAR / HEADER -->
+  <header class="w-full border-b border-gold/30 bg-black/40 backdrop-blur-md px-4 py-3 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 flex items-center justify-center text-black font-black text-lg shadow-md font-cinzel">
+          ♠
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-wider font-cinzel text-amber-200">
+            A C A A N
+          </h1>
+          <p class="text-xs text-amber-400/70 hidden sm:block tracking-widest uppercase">Any Card At Any Number • Milagro Mágico</p>
+        </div>
+      </div>
+
+      <!-- Action tools -->
+      <div class="flex items-center gap-2">
+        <!-- Sound toggle -->
+        <button id="btn-sound-toggle" title="Alternar Sonidos" class="p-2 sm:px-3 sm:py-1.5 rounded-lg border border-gold/40 bg-emerald-950/40 hover:bg-emerald-900/60 transition text-amber-300 text-sm flex items-center gap-1.5">
+          <span id="sound-icon">🔊</span>
+          <span class="hidden sm:inline text-xs font-semibold">Audio</span>
+        </button>
+
+        <!-- Secret / Magician Panel Button -->
+        <button id="btn-secret-panel" title="Modo Secreto / Magician Tools (Shift+M)" class="relative p-2 sm:px-3 sm:py-1.5 rounded-lg border border-amber-500/50 bg-gradient-to-r from-amber-950/80 to-stone-900 hover:from-amber-900/80 hover:to-amber-950 transition text-amber-200 text-sm flex items-center gap-2">
+          <span class="inline-block animate-pulse text-amber-400">✨</span>
+          <span class="text-xs font-cinzel font-bold">Modo Secreto</span>
+          <span id="secret-indicator" class="w-2 h-2 rounded-full bg-emerald-400 hidden"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN FELT CANVAS / TABLE -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-6">
+
+    <!-- SELECTION STAGE (RANDOM OR CHOSEN CARD & NUMBER) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- CARD SELECTION BOX -->
+      <div class="bg-black/40 border border-gold/40 rounded-2xl p-4 sm:p-5 backdrop-blur-md flex flex-col justify-between shadow-xl relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-6 text-9xl text-white/[0.02] font-cinzel select-none pointer-events-none">♥</div>
+        
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-widest text-amber-400 font-cinzel">1. La Carta Elegida</span>
+            <span id="card-status-badge" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">Aleatoria</span>
+          </div>
+
+          <div class="flex items-center gap-4 my-2">
+            <!-- Target Card Visual preview -->
+            <div id="target-card-preview" class="w-20 h-28 sm:w-24 sm:h-36 rounded-xl bg-white text-slate-900 flex flex-col justify-between p-2.5 shadow-2xl border-2 border-amber-300/80 transition-all duration-300 shrink-0 transform hover:scale-105">
+              <div class="flex justify-between items-start font-bold leading-none text-base sm:text-lg">
+                <span id="tc-val-top">A</span>
+                <span id="tc-suit-top" class="text-red-600">♥</span>
+              </div>
+              <div id="tc-suit-center" class="text-center text-3xl sm:text-4xl text-red-600 font-bold leading-none">♥</div>
+              <div class="flex justify-between items-end font-bold leading-none text-base sm:text-lg rotate-180">
+                <span id="tc-val-bot">A</span>
+                <span id="tc-suit-bot" class="text-red-600">♥</span>
+              </div>
+            </div>
+
+            <!-- Description & Quick Controls -->
+            <div class="flex-1 space-y-2">
+              <h2 id="target-card-name" class="text-lg sm:text-xl font-bold font-cinzel text-white leading-tight">As de Corazones</h2>
+              <p class="text-xs text-slate-300">Cualquier espectador nombra mental o verbalmente cualquier carta de la baraja.</p>
+              
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button id="btn-rand-card" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-xs font-semibold transition active:scale-95 flex items-center gap-1.5">
+                  🎲 Carta Aleatoria
+                </button>
+                <button id="btn-custom-card-modal" class="px-3 py-1.5 rounded-lg bg-stone-800/80 hover:bg-stone-700/80 text-stone-300 border border-stone-600 text-xs font-semibold transition">
+                  🎯 Elegir Carta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NUMBER SELECTION BOX -->
+      <div class="bg-black/40 border border-gold/40 rounded-2xl p-4 sm:p-5 backdrop-blur-md flex flex-col justify-between shadow-xl relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 text-9xl text-white/[0.02] font-cinzel select-none pointer-events-none">#</div>
+        
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-widest text-amber-400 font-cinzel">2. El Número Elegido</span>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">1 al 52</span>
+          </div>
+
+          <div class="flex items-center gap-4 my-2">
+            <!-- Big Number Display -->
+            <div class="w-20 h-28 sm:w-24 sm:h-36 rounded-xl bg-gradient-to-b from-stone-900 to-black text-amber-300 flex flex-col items-center justify-center shadow-2xl border-2 border-amber-400/70 shrink-0">
+              <span class="text-[10px] text-amber-500/80 uppercase font-cinzel">Posición</span>
+              <span id="target-number-display" class="text-4xl sm:text-5xl font-black font-cinzel tracking-tight text-amber-200">27</span>
+              <span class="text-[10px] text-amber-500/80 uppercase">de 52</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex-1 space-y-2">
+              <h2 class="text-lg sm:text-xl font-bold font-cinzel text-white leading-tight">Posición Exacta</h2>
+              <p class="text-xs text-slate-300">Un número nombrado libremente sin restricciones ni equívocos.</p>
+
+              <div class="flex items-center gap-2 pt-1">
+                <input id="number-slider" type="range" min="1" max="52" value="27" class="w-full accent-amber-400 bg-stone-700 h-2 rounded-lg cursor-pointer">
+              </div>
+
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button id="btn-rand-num" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-xs font-semibold transition active:scale-95 flex items-center gap-1.5">
+                  🎲 Número al Azar
+                </button>
+                <div class="inline-flex rounded-lg border border-stone-600 bg-stone-800/80 text-xs">
+                  <button id="btn-num-dec" class="px-2.5 py-1 text-stone-200 hover:text-white hover:bg-stone-700/80 rounded-l-lg font-bold">-</button>
+                  <button id="btn-num-inc" class="px-2.5 py-1 text-stone-200 hover:text-white hover:bg-stone-700/80 rounded-r-lg font-bold border-l border-stone-700">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PERFORMANCE / DEALING STAGE -->
+    <div class="bg-black/50 border border-gold/40 rounded-3xl p-4 sm:p-6 backdrop-blur-md shadow-2xl relative">
+      
+      <!-- Stage header and Controls -->
+      <div class="flex flex-col sm:flex-row items-center justify-between pb-4 border-b border-amber-500/20 gap-3">
+        <div class="flex items-center gap-3">
+          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          <div>
+            <h3 class="font-cinzel text-lg font-bold text-amber-100">Tapete de Reparto</h3>
+            <p id="deck-status-text" class="text-xs text-amber-300/80">Baraja lista para contar hasta la posición <span id="lbl-target-num" class="font-bold text-amber-300">27</span></p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <!-- Reset / Collect -->
+          <button id="btn-reset-deck" class="px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 text-xs font-semibold transition flex items-center gap-1.5">
+            ↺ Recoger Baraja
+          </button>
+          
+          <!-- Shuffle -->
+          <button id="btn-shuffle-deck" class="px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 text-xs font-semibold transition flex items-center gap-1.5">
+            🔀 Mezclar
+          </button>
+
+          <!-- Deal One Step -->
+          <button id="btn-deal-one" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs shadow-lg transition active:scale-95 flex items-center gap-1.5 border border-amber-400/50">
+            👉 Contar Carta (1)
+          </button>
+
+          <!-- Auto Deal to N -->
+          <button id="btn-deal-all" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition active:scale-95 flex items-center gap-1.5 border border-emerald-400/50">
+            ⚡ Repartir hasta el Milagro
+          </button>
+        </div>
+      </div>
+
+      <!-- FELT TABLE VIEWPORT -->
+      <div class="mt-6 flex flex-col lg:flex-row items-center justify-around gap-8 min-h-[340px] relative px-2 py-4">
+        
+        <!-- DECK PILE (LEFT) -->
+        <div class="flex flex-col items-center">
+          <div class="text-xs font-cinzel font-semibold text-amber-300/90 mb-2 flex items-center gap-2">
+            <span>Baraja en Mano</span>
+            <span id="deck-count-badge" class="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30 text-[10px]">52 cartas</span>
+          </div>
+
+          <!-- 3D Stack visual representation -->
+          <div id="deck-stack-container" class="relative w-36 h-52 sm:w-44 sm:h-64 cursor-pointer group" title="Click para repartir una carta">
+            <!-- Rendered via JS to show real 3D layered cards -->
+          </div>
+
+          <div class="mt-3 text-[11px] text-amber-200/60 text-center">
+            Haz clic en la baraja para repartir
+          </div>
+        </div>
+
+        <!-- PROGRESS & STATS IN CENTER -->
+        <div class="flex flex-col items-center justify-center text-center space-y-2 max-w-[220px]">
+          <div class="text-xs uppercase tracking-wider text-amber-400/80 font-cinzel">Contador Actual</div>
+          <div id="current-count-display" class="text-5xl font-extrabold font-cinzel text-amber-300 drop-shadow-md">0</div>
+          <div class="w-full bg-stone-800/80 rounded-full h-2.5 overflow-hidden border border-amber-500/20">
+            <div id="deal-progress-bar" class="bg-gradient-to-r from-amber-500 to-emerald-400 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="miracle-hint-text" class="text-xs text-stone-400 font-medium italic">Esperando inicio de conteo...</p>
+        </div>
+
+        <!-- DEALT PILE / REVEAL STAGE (RIGHT) -->
+        <div class="flex flex-col items-center">
+          <div class="text-xs font-cinzel font-semibold text-amber-300/90 mb-2 flex items-center gap-2">
+            <span>Mesa de Reparto</span>
+            <span id="dealt-count-badge" class="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 text-[10px]">0 cartas</span>
+          </div>
+
+          <!-- Target Card Reveal Slot -->
+          <div id="revealed-slot-container" class="relative w-36 h-52 sm:w-44 sm:h-64 rounded-2xl border-2 border-dashed border-amber-400/30 flex items-center justify-center p-2 bg-black/20 backdrop-blur-sm">
+            <!-- Inner card preview or placeholder -->
+            <div id="slot-placeholder" class="text-center p-4">
+              <span class="text-3xl text-amber-500/40 block mb-2">🃏</span>
+              <p class="text-xs text-amber-200/50 font-cinzel">Las cartas repartidas caerán aquí</p>
+            </div>
+            <div id="dealt-card-stage" class="absolute inset-0 w-full h-full hidden">
+              <!-- Animated Dealt Card with 3D Flip -->
+            </div>
+          </div>
+
+          <div id="reveal-message" class="mt-3 text-xs font-semibold text-center h-4 text-emerald-400 opacity-0 transition-opacity">
+            ¡Coincidencia Imposible!
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- QUICK INSTRUCTIONS FOR THE SPECTATOR -->
+    <div class="bg-stone-950/40 border border-amber-500/20 rounded-2xl p-4 text-xs text-stone-300 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-amber-400 text-base">ⓘ</span>
+        <span><strong>¿Cómo realizar el efecto?</strong> Da a elegir cualquier carta y cualquier número (1-52). Al repartir hasta esa posición exacta, la carta elegida se encontrará en ese mismo lugar.</span>
+      </div>
+      <span class="text-amber-400/80 font-cinzel shrink-0">Atajo secreto: <kbd class="px-1.5 py-0.5 bg-stone-800 rounded border border-stone-600 text-stone-200">Shift</kbd> + <kbd class="px-1.5 py-0.5 bg-stone-800 rounded border border-stone-600 text-stone-200">M</kbd></span>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-gold/20 bg-black/60 px-4 py-3 text-center text-[11px] text-stone-400">
+    <p>ACAAN Magic Interactive Engine • Diseñado para ilusionistas y apasionados del misterio.</p>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: MANUAL CARD SELECTOR (SPECTATOR MODE) -->
+  <!-- ======================================================== -->
+  <div id="modal-card-picker" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-gradient-to-b from-stone-900 to-black border-2 border-gold/60 rounded-2xl max-w-xl w-full p-5 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-amber-500/30">
+        <div>
+          <h3 class="font-cinzel text-lg font-bold text-amber-200">Seleccionar Carta Deseada</h3>
+          <p class="text-xs text-stone-400">Elige el palo y el valor de la baraja</p>
+        </div>
+        <button id="btn-close-card-modal" class="text-stone-400 hover:text-white text-xl p-1 font-bold">&times;</button>
+      </div>
+
+      <!-- Suit Tabs -->
+      <div class="grid grid-cols-4 gap-2 my-4">
+        <button class="suit-tab-btn py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition bg-amber-500/20 text-red-500 border-red-500/40" data-suit="♥">
+          <span class="text-xl">♥</span> <span class="hidden sm:inline text-xs">Corazones</span>
+        </button>
+        <button class="suit-tab-btn py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition bg-stone-800/80 text-slate-100 border-stone-700 hover:bg-stone-700/60" data-suit="♠">
+          <span class="text-xl">♠</span> <span class="hidden sm:inline text-xs">Picas</span>
+        </button>
+        <button class="suit-tab-btn py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition bg-stone-800/80 text-red-500 border-stone-700 hover:bg-stone-700/60" data-suit="♦">
+          <span class="text-xl">♦</span> <span class="hidden sm:inline text-xs">Diamantes</span>
+        </button>
+        <button class="suit-tab-btn py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 border transition bg-stone-800/80 text-slate-100 border-stone-700 hover:bg-stone-700/60" data-suit="♣">
+          <span class="text-xl">♣</span> <span class="hidden sm:inline text-xs">Tréboles</span>
+        </button>
+      </div>
+
+      <!-- Card Values Grid -->
+      <div class="overflow-y-auto flex-1 p-1">
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2" id="grid-card-values">
+          <!-- Populated via JS (A, 2, 3... K) -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: SECRET MAGICIAN'S TOOLKIT & CALCULATOR -->
+  <!-- ======================================================== -->
+  <div id="modal-secret-panel" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-gradient-to-b from-[#111614] to-[#090d0b] border-2 border-amber-500/70 rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-amber-500/30">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🎩</span>
+          <div>
+            <h2 class="font-cinzel text-xl font-bold text-amber-200">Herramientas del Mago (Secreto)</h2>
+            <p class="text-xs text-amber-400/80">Control total del milagro, stacks clásicos y calculadora de corte</p>
+          </div>
+        </div>
+        <button id="btn-close-secret" class="text-stone-400 hover:text-white text-2xl font-bold p-1">&times;</button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 py-4 space-y-6 pr-1">
+
+        <!-- FORCE MODE / GIMMICK ENGINE -->
+        <div class="bg-black/40 border border-amber-500/30 rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-cinzel font-bold text-amber-300 text-sm flex items-center gap-2">
+              <span>🪄</span> Modo Forzado Automático (Milagro Seguro)
+            </h4>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="toggle-force-miracle" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-stone-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
+          <p class="text-xs text-stone-300">
+            Cuando está activado, la baraja <strong class="text-amber-200">siempre asegurará</strong> que la carta elegida aparezca exactamente en la posición indicada, ya sea reorganizando secretamente el corte o ajustando el orden sin que el espectador lo note.
+          </p>
+        </div>
+
+        <!-- STACK SELECTION -->
+        <div class="bg-black/40 border border-amber-500/30 rounded-2xl p-4">
+          <h4 class="font-cinzel font-bold text-amber-300 text-sm mb-2 flex items-center gap-2">
+            <span>📚</span> Seleccionar Nemónica / Stack de la Baraja
+          </h4>
+          <p class="text-xs text-stone-300 mb-3">
+            Elige el orden en el que está construida la baraja virtual:
+          </p>
+          
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button class="stack-option-btn p-2.5 rounded-xl border border-amber-400 bg-amber-500/20 text-amber-200 text-xs font-bold transition text-center" data-stack="mnemonica">
+              Tamariz Mnemonica
+            </button>
+            <button class="stack-option-btn p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-300 text-xs font-bold transition text-center hover:bg-stone-800" data-stack="aronson">
+              Aronson Stack
+            </button>
+            <button class="stack-option-btn p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-300 text-xs font-bold transition text-center hover:bg-stone-800" data-stack="stebbins">
+              Si Stebbins
+            </button>
+            <button class="stack-option-btn p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-300 text-xs font-bold transition text-center hover:bg-stone-800" data-stack="newdeck">
+              Nuevo Orden Fábrica
+            </button>
+          </div>
+        </div>
+
+        <!-- ACAAN CUT & SHIFT CALCULATOR -->
+        <div class="bg-amber-950/20 border border-amber-500/40 rounded-2xl p-4">
+          <h4 class="font-cinzel font-bold text-amber-300 text-sm mb-2 flex items-center gap-2">
+            <span>🧮</span> Calculadora de Desplazamiento & Corte
+          </h4>
+          <p class="text-xs text-stone-300 mb-3">
+            Si estás realizando el efecto con una baraja real memorizada (ej. Mnemónica de Juan Tamariz), esta calculadora te dice al instante el corte necesario:
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+            <div class="bg-black/50 p-3 rounded-xl border border-stone-700">
+              <span class="text-[10px] uppercase font-cinzel text-stone-400 block">Posición Original en Stack</span>
+              <span id="calc-orig-pos" class="text-xl font-bold text-amber-300">#4</span>
+            </div>
+            <div class="bg-black/50 p-3 rounded-xl border border-stone-700">
+              <span class="text-[10px] uppercase font-cinzel text-stone-400 block">Número Destino Pedido</span>
+              <span id="calc-target-num" class="text-xl font-bold text-amber-300">#27</span>
+            </div>
+            <div class="bg-black/50 p-3 rounded-xl border border-amber-500/40">
+              <span class="text-[10px] uppercase font-cinzel text-amber-400 font-bold block">Cartas a Cortar / Pasar</span>
+              <span id="calc-cut-amount" class="text-xl font-black text-emerald-400">Cortar 29</span>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3 bg-stone-900/80 rounded-xl text-xs text-stone-300 leading-relaxed border border-stone-800">
+            <span class="text-amber-400 font-bold">Fórmula de corte:</span> <span id="calc-cut-formula">Posición original - Número elegido (mod 52)</span>.
+            <div id="calc-cut-explanation" class="mt-1 text-amber-200/90 font-medium"></div>
+          </div>
+        </div>
+
+        <!-- QUICK FORCED CARD & NUMBER (FOR REAL PERFORMANCE RIGGING) -->
+        <div class="bg-black/40 border border-amber-500/30 rounded-2xl p-4">
+          <h4 class="font-cinzel font-bold text-amber-300 text-sm mb-2 flex items-center gap-2">
+            <span>🎯</span> Predeterminar Valores Secretos
+          </h4>
+          <p class="text-xs text-stone-300 mb-3">
+            Fija de antemano el número o la carta para que cuando un espectador use la app aparentemente al azar, dé exactamente este resultado:
+          </p>
+
+          <div class="flex flex-wrap gap-3 items-center">
+            <button id="btn-force-preset-1" class="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs text-amber-200">
+              Forzar: 4♣ en Posición 18
+            </button>
+            <button id="btn-force-preset-2" class="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs text-amber-200">
+              Forzar: As♠ en Posición 52
+            </button>
+            <button id="btn-force-preset-3" class="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs text-amber-200">
+              Forzar: 10♥ en Posición 7
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-3 border-t border-amber-500/20 flex justify-end">
+        <button id="btn-apply-secret" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs uppercase tracking-wider font-cinzel">
+          Guardar & Volver al Tapete
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC (AUDIO, STACKS, ACAAN ENGINE, RENDERING) -->
+  <script>
+    /* ========================================================
+       1. DATA STRUCTURES & CLASSIC MAGIC STACKS
+       ======================================================== */
+    const SUITS = ['♥', '♠', '♦', '♣'];
+    const SUIT_NAMES = { '♥': 'Corazones', '♠': 'Picas', '♦': 'Diamantes', '♣': 'Tréboles' };
+    const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const VALUE_NAMES = {
+      'A': 'As', '2': 'Dos', '3': 'Tres', '4': 'Cuatro', '5': 'Cinco',
+      '6': 'Seis', '7': 'Siete', '8': 'Ocho', '9': 'Nueve', '10': 'Diez',
+      'J': 'Jota', 'Q': 'Reina', 'K': 'Rey'
+    };
+
+    // Famous Juan Tamariz Mnemonica stack (52 cards in order)
+    const MNEMONICA_RAW = [
+      "4♣", "2♥", "7♦", "3♣", "4♥", "6♦", "A♠", "5♥", "9♠", "2♠",
+      "K♦", "3♦", "8♣", "6♥", "10♠", "5♦", "K♦", "2♣", "3♥", "8♠",
+      "5♠", "K♠", "J♦", "8♥", "10♠", "K♣", "J♥", "10♦", "A♥", "4♠",
+      "7♥", "4♦", "A♣", "5♣", "7♠", "Q♥", "A♦", "7♣", "J♠", "6♠",
+      "Q♠", "10♣", "8♦", "Q♣", "9♥", "J♣", "9♦", "Q♦", "K♥", "3♠",
+      "9♣", "6♣"
+    ];
+
+    // Standard Canonical Mnemonica corrected cards (52 distinct cards)
+    const MNEMONICA = [
+      {v: '4', s: '♣'}, {v: '2', s: '♥'}, {v: '7', s: '♦'}, {v: '3', s: '♣'},
+      {v: '4', s: '♥'}, {v: '6', s: '♦'}, {v: 'A', s: '♠'}, {v: '5', s: '♥'},
+      {v: '9', s: '♠'}, {v: '2', s: '♠'}, {v: 'J', s: '♥'}, {v: '3', s: '♦'},
+      {v: '8', s: '♣'}, {v: '6', s: '♥'}, {v: '10', s: '♠'}, {v: '5', s: '♦'},
+      {v: 'K', s: '♦'}, {v: '2', s: '♣'}, {v: '3', s: '♥'}, {v: '8', s: '♠'},
+      {v: '5', s: '♠'}, {v: 'K', s: '♠'}, {v: 'J', s: '♦'}, {v: '8', s: '♥'},
+      {v: '10', s: '♣'}, {v: 'K', s: '♣'}, {v: 'J', s: '♣'}, {v: '10', s: '♦'},
+      {v: 'A', s: '♥'}, {v: '4', s: '♠'}, {v: '7', s: '♥'}, {v: '4', s: '♦'},
+      {v: 'A', s: '♣'}, {v: '5', s: '♣'}, {v: '7', s: '♠'}, {v: 'Q', s: '♥'},
+      {v: 'A', s: '♦'}, {v: '7', s: '♣'}, {v: 'J', s: '♠'}, {v: '6', s: '♠'},
+      {v: 'Q', s: '♠'}, {v: '10', s: '♥'}, {v: '8', s: '♦'}, {v: 'Q', s: '♣'},
+      {v: '9', s: '♥'}, {v: '2', s: '♦'}, {v: '9', s: '♦'}, {v: 'Q', s: '♦'},
+      {v: 'K', s: '♥'}, {v: '3', s: '♠'}, {v: '9', s: '♣'}, {v: '6', s: '♣'}
+    ];
+
+    // Aronson Stack
+    const ARONSON = [
+      {v: 'J', s: '♣'}, {v: 'K', s: '♣'}, {v: '5', s: '♣'}, {v: '2', s: '♥'},
+      {v: '9', s: '♠'}, {v: 'J', s: '♠'}, {v: '3', s: '♣'}, {v: '6', s: '♥'},
+      {v: '8', s: '♦'}, {v: 'A', s: '♠'}, {v: '10', s: '♠'}, {v: '5', s: '♥'},
+      {v: '2', s: '♦'}, {v: 'K', s: '♦'}, {v: '7', s: '♦'}, {v: '8', s: '♣'},
+      {v: '3', s: '♥'}, {v: 'A', s: '♦'}, {v: '7', s: '♠'}, {v: '5', s: '♠'},
+      {v: 'Q', s: '♦'}, {v: 'A', s: '♥'}, {v: '8', s: '♠'}, {v: '3', s: '♦'},
+      {v: '7', s: '♥'}, {v: 'Q', s: '♥'}, {v: '5', s: '♦'}, {v: '7', s: '♣'},
+      {v: '4', s: '♥'}, {v: 'K', s: '♥'}, {v: '4', s: '♦'}, {v: '10', s: '♦'},
+      {v: 'J', s: '♦'}, {v: 'J', s: '♥'}, {v: '10', s: '♥'}, {v: '2', s: '♣'},
+      {v: '9', s: '♥'}, {v: '2', s: '♠'}, {v: '10', s: '♣'}, {v: '6', s: '♦'},
+      {v: 'Q', s: '♠'}, {v: '4', s: '♠'}, {v: '9', s: '♦'}, {v: 'K', s: '♠'},
+      {v: 'J', s: '♦'}, {v: '9', s: '♣'}, {v: '3', s: '♠'}, {v: '8', s: '♥'},
+      {v: '6', s: '♠'}, {v: '6', s: '♣'}, {v: 'A', s: '♣'}, {v: '4', s: '♣'}
+    ];
+
+    // Helper to generate full 52 cards deck in order
+    function createFreshDeck() {
+      const deck = [];
+      const suitOrder = ['♠', '♥', '♣', '♦'];
+      suitOrder.forEach(s => {
+        VALUES.forEach(v => {
+          deck.push({ v, s });
+        });
+      });
+      return deck;
+    }
+
+    // Helper to generate Si Stebbins deck (value + 3, suit order: C H S D)
+    function createSiStebbins() {
+      const deck = [];
+      const stebbinsSuits = ['♣', '♥', '♠', '♦'];
+      let valIdx = 0; // Starts at Ace
+      for (let i = 0; i < 52; i++) {
+        deck.push({
+          v: VALUES[valIdx % 13],
+          s: stebbinsSuits[i % 4]
+        });
+        valIdx = (valIdx + 3) % 13;
+      }
+      return deck;
+    }
+
+    /* ========================================================
+       2. SYNTHESIZED SOUND ENGINE (WEB AUDIO API)
+       ======================================================== */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playCardDealSound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        // White noise friction for card sliding
+        const bufferSize = ctx.sampleRate * 0.08;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, ctx.currentTime);
+        filter.Q.setValueAtTime(3.0, ctx.currentTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.35, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start();
+      } catch (e) {
+        console.warn("Audio error:", e);
+      }
+    }
+
+    function playCardShuffleSound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        for (let i = 0; i < 8; i++) {
+          setTimeout(() => {
+            playCardDealSound();
+          }, i * 40);
+        }
+      } catch (e) {}
+    }
+
+    function playMiracleChime() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C Major arpeggio
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, ctx.currentTime + idx * 0.08);
+
+          gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08);
+          gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 1.2);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 1.3);
+        });
+      } catch (e) {}
+    }
+
+    /* ========================================================
+       3. APP STATE & INITIALIZATION
+       ======================================================== */
+    const state = {
+      targetCard: { v: 'A', s: '♥' },
+      targetNumber: 27,
+      activeStackType: 'mnemonica',
+      forceMiracleEnabled: true,
+      currentDeck: [...MNEMONICA], // The current order of the cards
+      dealtCards: [],
+      currentCount: 0,
+      isAutoDealing: false,
+      modalCardSuitSelected: '♥'
+    };
+
+    // DOM Elements
+    const dom = {
+      // Targets
+      tcValTop: document.getElementById('tc-val-top'),
+      tcSuitTop: document.getElementById('tc-suit-top'),
+      tcSuitCenter: document.getElementById('tc-suit-center'),
+      tcValBot: document.getElementById('tc-val-bot'),
+      tcSuitBot: document.getElementById('tc-suit-bot'),
+      tcName: document.getElementById('target-card-name'),
+      targetNumDisplay: document.getElementById('target-number-display'),
+      numberSlider: document.getElementById('number-slider'),
+      lblTargetNum: document.getElementById('lbl-target-num'),
+      
+      // Buttons
+      btnRandCard: document.getElementById('btn-rand-card'),
+      btnCustomCardModal: document.getElementById('btn-custom-card-modal'),
+      btnRandNum: document.getElementById('btn-rand-num'),
+      btnNumDec: document.getElementById('btn-num-dec'),
+      btnNumInc: document.getElementById('btn-num-inc'),
+      btnDealOne: document.getElementById('btn-deal-one'),
+      btnDealAll: document.getElementById('btn-deal-all'),
+      btnResetDeck: document.getElementById('btn-reset-deck'),
+      btnShuffleDeck: document.getElementById('btn-shuffle-deck'),
+      btnSoundToggle: document.getElementById('btn-sound-toggle'),
+      soundIcon: document.getElementById('sound-icon'),
+      
+      // Stage containers
+      deckStackContainer: document.getElementById('deck-stack-container'),
+      dealtCardStage: document.getElementById('dealt-card-stage'),
+      slotPlaceholder: document.getElementById('slot-placeholder'),
+      currentCountDisplay: document.getElementById('current-count-display'),
+      dealProgressBar: document.getElementById('deal-progress-bar'),
+      deckCountBadge: document.getElementById('deck-count-badge'),
+      dealtCountBadge: document.getElementById('dealt-count-badge'),
+      deckStatusText: document.getElementById('deck-status-text'),
+      miracleHintText: document.getElementById('miracle-hint-text'),
+      revealMessage: document.getElementById('reveal-message'),
+      
+      // Secret Modal
+      btnSecretPanel: document.getElementById('btn-secret-panel'),
+      modalSecretPanel: document.getElementById('modal-secret-panel'),
+      btnCloseSecret: document.getElementById('btn-close-secret'),
+      btnApplySecret: document.getElementById('btn-apply-secret'),
+      secretIndicator: document.getElementById('secret-indicator'),
+      toggleForceMiracle: document.getElementById('toggle-force-miracle'),
+      calcOrigPos: document.getElementById('calc-orig-pos'),
+      calcTargetNum: document.getElementById('calc-target-num'),
+      calcCutAmount: document.getElementById('calc-cut-amount'),
+      calcCutExplanation: document.getElementById('calc-cut-explanation'),
+      
+      // Card Picker Modal
+      modalCardPicker: document.getElementById('modal-card-picker'),
+      btnCloseCardModal: document.getElementById('btn-close-card-modal'),
+      gridCardValues: document.getElementById('grid-card-values')
+    };
+
+    /* ========================================================
+       4. HELPER CARD RENDERING & LOGIC
+       ======================================================== */
+    function isRedSuit(suit) {
+      return suit === '♥' || suit === '♦';
+    }
+
+    function getCardFullName(card) {
+      return `${VALUE_NAMES[card.v] || card.v} de ${SUIT_NAMES[card.s] || card.s}`;
+    }
+
+    function updateTargetCardUI() {
+      const isRed = isRedSuit(state.targetCard.s);
+      const suitColor = isRed ? 'text-red-600' : 'text-slate-900';
+
+      dom.tcValTop.textContent = state.targetCard.v;
+      dom.tcSuitTop.textContent = state.targetCard.s;
+      dom.tcSuitCenter.textContent = state.targetCard.s;
+      dom.tcValBot.textContent = state.targetCard.v;
+      dom.tcSuitBot.textContent = state.targetCard.s;
+
+      dom.tcSuitTop.className = suitColor;
+      dom.tcSuitCenter.className = `text-center text-3xl sm:text-4xl ${suitColor} font-bold leading-none`;
+      dom.tcSuitBot.className = suitColor;
+
+      dom.tcName.textContent = getCardFullName(state.targetCard);
+      updateSecretCalculator();
+    }
+
+    function updateTargetNumberUI() {
+      dom.targetNumDisplay.textContent = state.targetNumber;
+      dom.numberSlider.value = state.targetNumber;
+      dom.lblTargetNum.textContent = state.targetNumber;
+      updateSecretCalculator();
+    }
+
+    /* ========================================================
+       5. MAGICIAN'S ENGINE: FORCING & CUT CALCULATION
+       ======================================================== */
+    function getCardIndexInCurrentDeck(card) {
+      return state.currentDeck.findIndex(c => c.v === card.v && c.s === card.s);
+    }
+
+    function updateSecretCalculator() {
+      const idx = getCardIndexInCurrentDeck(state.targetCard);
+      const originalPos = idx >= 0 ? idx + 1 : 1; // 1-based position
+      const desiredPos = state.targetNumber;
+
+      dom.calcOrigPos.textContent = `#${originalPos}`;
+      dom.calcTargetNum.textContent = `#${desiredPos}`;
+
+      // To bring the card at originalPos to desiredPos:
+      // We need cardsToCut = (originalPos - desiredPos + 52) % 52
+      let cutNeeded = (originalPos - desiredPos + 52) % 52;
+      
+      if (cutNeeded === 0) {
+        dom.calcCutAmount.textContent = "Corte 0 (¡Posición perfecta!)";
+        dom.calcCutAmount.className = "text-xl font-black text-emerald-400";
+        dom.calcCutExplanation.innerHTML = `La carta <strong>${getCardFullName(state.targetCard)}</strong> ya está en la posición exacta #${desiredPos}. No se requiere corte.`;
+      } else {
+        dom.calcCutAmount.textContent = `Cortar ${cutNeeded} cartas`;
+        dom.calcCutAmount.className = "text-xl font-black text-amber-300";
+        const topAfterCut = state.currentDeck[cutNeeded % 52];
+        dom.calcCutExplanation.innerHTML = `Corta <strong>${cutNeeded}</strong> cartas de arriba al fondo. La nueva carta superior quedará como <strong>${getCardFullName(topAfterCut)}</strong>.`;
+      }
+    }
+
+    // Force Miracle: Automatically rearranges the stack secretly so target card is at target position
+    function ensureMiracleStack() {
+      if (!state.forceMiracleEnabled) return;
+
+      const currentIdx = getCardIndexInCurrentDeck(state.targetCard);
+      if (currentIdx === -1) return;
+
+      const desiredIdx = state.targetNumber - 1; // 0-based
+      if (currentIdx === desiredIdx) return; // already in place
+
+      // Perform a clean cyclic cut so stack relationship preserves natural order!
+      let cutAmount = (currentIdx - desiredIdx + 52) % 52;
+      state.currentDeck = [
+        ...state.currentDeck.slice(cutAmount),
+        ...state.currentDeck.slice(0, cutAmount)
+      ];
+
+      renderDeckPile();
+      updateSecretCalculator();
+    }
+
+    /* ========================================================
+       6. 3D DECK RENDERING & VISUAL LAYERING
+       ======================================================== */
+    function renderDeckPile() {
+      const container = dom.deckStackContainer;
+      container.innerHTML = '';
+      const remainingCount = state.currentDeck.length;
+
+      dom.deckCountBadge.textContent = `${remainingCount} cartas`;
+      dom.dealtCountBadge.textContent = `${state.dealtCards.length} cartas`;
+
+      if (remainingCount === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = "w-full h-full rounded-2xl border-2 border-dashed border-stone-700 flex items-center justify-center text-xs text-stone-500 font-cinzel text-center p-3";
+        emptyMsg.textContent = "Baraja agotada";
+        container.appendChild(emptyMsg);
+        return;
+      }
+
+      // Show realistic physical stack thickness (limit to visible layers up to 14)
+      const layers = Math.min(Math.ceil(remainingCount / 4), 14);
+      for (let i = 0; i < layers; i++) {
+        const cardLayer = document.createElement('div');
+        const offset = i * 2;
+        cardLayer.className = `absolute inset-0 rounded-2xl card-back-pattern transition-transform duration-200 pointer-events-none`;
+        cardLayer.style.top = `-${offset}px`;
+        cardLayer.style.left = `${offset * 0.4}px`;
+        cardLayer.style.boxShadow = `0 ${2 + i}px ${4 + i * 2}px rgba(0,0,0,0.5)`;
+        container.appendChild(cardLayer);
+      }
+
+      // Interactive top card
+      const topCard = document.createElement('div');
+      const topOffset = (layers - 1) * 2;
+      topCard.className = `absolute inset-0 rounded-2xl card-back-pattern cursor-pointer hover:-translate-y-2 hover:shadow-2xl transition duration-200 flex items-center justify-center`;
+      topCard.style.top = `-${topOffset}px`;
+      topCard.style.left = `${(layers - 1) * 0.4}px`;
+      topCard.style.boxShadow = `0 12px 28px rgba(0,0,0,0.7)`;
+
+      // Back medallion seal
+      topCard.innerHTML = `
+        <div class="w-12 h-16 rounded-full border-2 border-amber-300/40 bg-red-950/80 flex items-center justify-center shadow-inner">
+          <span class="text-amber-200/80 text-xl font-cinzel">♠</span>
+        </div>
+      `;
+      topCard.addEventListener('click', () => {
+        dealCard();
+      });
+
+      container.appendChild(topCard);
+    }
+
+    function createCardElement(card, isRevealed = false) {
+      const isRed = isRedSuit(card.s);
+      const suitColor = isRed ? 'text-red-600' : 'text-slate-900';
+
+      const cardEl = document.createElement('div');
+      cardEl.className = 'w-full h-full perspective-1000';
+      cardEl.innerHTML = `
+        <div class="card-inner relative w-full h-full transform-style-preserve-3d transition-transform duration-700 rounded-2xl ${isRevealed ? 'rotate-y-180' : ''}">
+          <!-- Back -->
+          <div class="absolute inset-0 w-full h-full rounded-2xl card-back-pattern backface-hidden shadow-2xl flex items-center justify-center">
+            <div class="w-12 h-16 rounded-full border-2 border-amber-300/40 bg-red-950/80 flex items-center justify-center shadow-inner">
+              <span class="text-amber-200/80 text-xl font-cinzel">♠</span>
+            </div>
+          </div>
+          <!-- Front -->
+          <div class="absolute inset-0 w-full h-full rounded-2xl bg-white text-slate-900 p-3 sm:p-4 flex flex-col justify-between backface-hidden rotate-y-180 shadow-2xl border-2 border-amber-300">
+            <div class="flex justify-between items-start font-bold leading-none text-base sm:text-xl">
+              <span>${card.v}</span>
+              <span class="${suitColor}">${card.s}</span>
+            </div>
+            <div class="text-center text-4xl sm:text-6xl ${suitColor} font-bold leading-none select-none">${card.s}</div>
+            <div class="flex justify-between items-end font-bold leading-none text-base sm:text-xl rotate-180">
+              <span>${card.v}</span>
+              <span class="${suitColor}">${card.s}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return cardEl;
+    }
+
+    /* ========================================================
+       7. DEALING LOGIC & ANIMATIONS
+       ======================================================== */
+    function dealCard() {
+      if (state.currentDeck.length === 0) return null;
+
+      // Before the first card is dealt, guarantee the miracle stack
+      if (state.currentCount === 0) {
+        ensureMiracleStack();
+      }
+
+      state.currentCount++;
+      const dealtCard = state.currentDeck.shift();
+      state.dealtCards.push(dealtCard);
+
+      playCardDealSound();
+
+      // UI updates
+      dom.currentCountDisplay.textContent = state.currentCount;
+      const progressPercent = Math.min(100, Math.round((state.currentCount / state.targetNumber) * 100));
+      dom.dealProgressBar.style.width = `${progressPercent}%`;
+
+      // Update stage
+      dom.slotPlaceholder.classList.add('hidden');
+      dom.dealtCardStage.classList.remove('hidden');
+      dom.dealtCardStage.innerHTML = '';
+
+      const isTargetCount = state.currentCount === state.targetNumber;
+      
+      // Target card gets revealed! Other dealt cards stay face up or face down based on deal style
+      // In ACAAN standard routine: cards are dealt face-down until reaching the number, then the target is flipped!
+      const cardEl = createCardElement(dealtCard, isTargetCount);
+      dom.dealtCardStage.appendChild(cardEl);
+
+      // Render updated deck pile
+      renderDeckPile();
+
+      if (isTargetCount) {
+        // MIRACLE REVEAL!
+        setTimeout(() => {
+          playMiracleChime();
+          dom.revealMessage.textContent = `¡Milagro! La carta #${state.targetNumber} es exactamente el ${getCardFullName(dealtCard)}`;
+          dom.revealMessage.classList.remove('opacity-0');
+          dom.revealMessage.classList.add('text-amber-300', 'font-bold', 'animate-pulse');
+
+          // Highlight card stage
+          dom.dealtCardStage.classList.add('scale-105', 'transition-transform');
+        }, 400);
+
+        dom.miracleHintText.textContent = `¡Posición #${state.targetNumber} alcanzada!`;
+      } else if (state.currentCount < state.targetNumber) {
+        dom.miracleHintText.textContent = `Contando... faltan ${state.targetNumber - state.currentCount} cartas.`;
+        dom.revealMessage.classList.add('opacity-0');
+      } else {
+        dom.miracleHintText.textContent = `Carta #${state.currentCount} (Superado el número objetivo)`;
+      }
+
+      return dealtCard;
+    }
+
+    async function autoDealAll() {
+      if (state.isAutoDealing) return;
+      if (state.currentCount >= state.targetNumber) {
+        resetDeck();
+      }
+
+      state.isAutoDealing = true;
+      dom.btnDealAll.disabled = true;
+      dom.btnDealOne.disabled = true;
+      dom.btnDealAll.classList.add('opacity-50');
+      dom.btnDealOne.classList.add('opacity-50');
+
+      const target = state.targetNumber;
+      while (state.currentCount < target && state.currentDeck.length > 0) {
+        dealCard();
+        // Dynamic speed: slows down slightly as it reaches the climax
+        const remaining = target - state.currentCount;
+        let delay = 180;
+        if (remaining <= 3) delay = 380;
+        else if (remaining <= 7) delay = 260;
+        await new Promise(r => setTimeout(r, delay));
+      }
+
+      state.isAutoDealing = false;
+      dom.btnDealAll.disabled = false;
+      dom.btnDealOne.disabled = false;
+      dom.btnDealAll.classList.remove('opacity-50');
+      dom.btnDealOne.classList.remove('opacity-50');
+    }
+
+    function resetDeck() {
+      state.isAutoDealing = false;
+      state.currentCount = 0;
+      state.dealtCards = [];
+
+      // Load stack according to active stack setting
+      loadStack(state.activeStackType);
+
+      // Reset UI elements
+      dom.currentCountDisplay.textContent = '0';
+      dom.dealProgressBar.style.width = '0%';
+      dom.slotPlaceholder.classList.remove('hidden');
+      dom.dealtCardStage.classList.add('hidden');
+      dom.dealtCardStage.classList.remove('scale-105');
+      dom.dealtCardStage.innerHTML = '';
+      dom.revealMessage.classList.add('opacity-0');
+      dom.miracleHintText.textContent = "Esperando inicio de conteo...";
+
+      renderDeckPile();
+      updateSecretCalculator();
+    }
+
+    function shuffleDeck() {
+      playCardShuffleSound();
+      
+      // Shuffle array
+      const arr = [...state.currentDeck];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      state.currentDeck = arr;
+
+      // Animate visual deck
+      dom.deckStackContainer.classList.add('animate-pulse');
+      setTimeout(() => {
+        dom.deckStackContainer.classList.remove('animate-pulse');
+      }, 400);
+
+      renderDeckPile();
+      updateSecretCalculator();
+    }
+
+    function loadStack(stackType) {
+      state.activeStackType = stackType;
+      switch (stackType) {
+        case 'mnemonica':
+          state.currentDeck = [...MNEMONICA];
+          break;
+        case 'aronson':
+          state.currentDeck = [...ARONSON];
+          break;
+        case 'stebbins':
+          state.currentDeck = createSiStebbins();
+          break;
+        case 'newdeck':
+        default:
+          state.currentDeck = createFreshDeck();
+          break;
+      }
+    }
+
+    /* ========================================================
+       8. MODAL CARD PICKER GENERATION
+       ======================================================== */
+    function renderCardPickerValues() {
+      const grid = dom.gridCardValues;
+      grid.innerHTML = '';
+
+      const suit = state.modalCardSuitSelected;
+      const isRed = isRedSuit(suit);
+      const textColor = isRed ? 'text-red-500' : 'text-slate-100';
+
+      VALUES.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = `p-3 rounded-xl bg-stone-800/90 hover:bg-amber-500/20 border border-stone-700 hover:border-amber-400 font-bold text-center transition flex flex-col items-center justify-center gap-1 active:scale-95`;
+        btn.innerHTML = `
+          <span class="text-base sm:text-lg font-cinzel leading-none">${val}</span>
+          <span class="text-xl ${textColor} leading-none">${suit}</span>
+        `;
+        btn.addEventListener('click', () => {
+          state.targetCard = { v: val, s: suit };
+          updateTargetCardUI();
+          closeModalCardPicker();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function openModalCardPicker() {
+      dom.modalCardPicker.classList.remove('hidden');
+      setTimeout(() => {
+        dom.modalCardPicker.classList.remove('opacity-0');
+      }, 10);
+      renderCardPickerValues();
+    }
+
+    function closeModalCardPicker() {
+      dom.modalCardPicker.classList.add('opacity-0');
+      setTimeout(() => {
+        dom.modalCardPicker.classList.add('hidden');
+      }, 200);
+    }
+
+    /* ========================================================
+       9. MODAL SECRET MAGICIAN'S PANEL
+       ======================================================== */
+    function openSecretPanel() {
+      updateSecretCalculator();
+      dom.modalSecretPanel.classList.remove('hidden');
+      setTimeout(() => {
+        dom.modalSecretPanel.classList.remove('opacity-0');
+      }, 10);
+    }
+
+    function closeSecretPanel() {
+      dom.modalSecretPanel.classList.add('opacity-0');
+      setTimeout(() => {
+        dom.modalSecretPanel.classList.add('hidden');
+      }, 200);
+    }
+
+    /* ========================================================
+       10. EVENT LISTENERS
+       ======================================================== */
+    // Random card button
+    dom.btnRandCard.addEventListener('click', () => {
+      const randomVal = VALUES[Math.floor(Math.random() * VALUES.length)];
+      const randomSuit = SUITS[Math.floor(Math.random() * SUITS.length)];
+      state.targetCard = { v: randomVal, s: randomSuit };
+      updateTargetCardUI();
+      playCardDealSound();
+    });
+
+    // Random number button
+    dom.btnRandNum.addEventListener('click', () => {
+      const randNum = Math.floor(Math.random() * 52) + 1;
+      state.targetNumber = randNum;
+      updateTargetNumberUI();
+      playCardDealSound();
+    });
+
+    // Slider for target number
+    dom.numberSlider.addEventListener('input', (e) => {
+      state.targetNumber = parseInt(e.target.value, 10);
+      updateTargetNumberUI();
+    });
+
+    // Inc / Dec number buttons
+    dom.btnNumDec.addEventListener('click', () => {
+      if (state.targetNumber > 1) {
+        state.targetNumber--;
+        updateTargetNumberUI();
+      }
+    });
+
+    dom.btnNumInc.addEventListener('click', () => {
+      if (state.targetNumber < 52) {
+        state.targetNumber++;
+        updateTargetNumberUI();
+      }
+    });
+
+    // Sound Toggle
+    dom.btnSoundToggle.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      dom.soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+    });
+
+    // Dealing buttons
+    dom.btnDealOne.addEventListener('click', () => dealCard());
+    dom.btnDealAll.addEventListener('click', () => autoDealAll());
+    dom.btnResetDeck.addEventListener('click', () => resetDeck());
+    dom.btnShuffleDeck.addEventListener('click', () => shuffleDeck());
+
+    // Card Picker Modal triggers
+    dom.btnCustomCardModal.addEventListener('click', openModalCardPicker);
+    dom.btnCloseCardModal.addEventListener('click', closeModalCardPicker);
+    dom.modalCardPicker.addEventListener('click', (e) => {
+      if (e.target === dom.modalCardPicker) closeModalCardPicker();
+    });
+
+    // Suit switcher tabs inside picker
+    document.querySelectorAll('.suit-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.suit-tab-btn').forEach(b => {
+          b.classList.remove('bg-amber-500/20', 'border-red-500/40', 'border-amber-400');
+          b.classList.add('bg-stone-800/80', 'border-stone-700');
+        });
+        btn.classList.add('bg-amber-500/20', 'border-amber-400');
+        state.modalCardSuitSelected = btn.getAttribute('data-suit');
+        renderCardPickerValues();
+      });
+    });
+
+    // Magician's Secret Toolkit Modal triggers
+    dom.btnSecretPanel.addEventListener('click', openSecretPanel);
+    dom.btnCloseSecret.addEventListener('click', closeSecretPanel);
+    dom.btnApplySecret.addEventListener('click', closeSecretPanel);
+    dom.modalSecretPanel.addEventListener('click', (e) => {
+      if (e.target === dom.modalSecretPanel) closeSecretPanel();
+    });
+
+    // Keyboard shortcut (Shift + M) for Magician mode
+    window.addEventListener('keydown', (e) => {
+      if (e.shiftKey && (e.key === 'M' || e.key === 'm')) {
+        e.preventDefault();
+        if (dom.modalSecretPanel.classList.contains('hidden')) {
+          openSecretPanel();
+        } else {
+          closeSecretPanel();
+        }
+      }
+    });
+
+    // Force Miracle Toggle
+    dom.toggleForceMiracle.addEventListener('change', (e) => {
+      state.forceMiracleEnabled = e.target.checked;
+      if (state.forceMiracleEnabled) {
+        dom.secretIndicator.classList.remove('hidden');
+      } else {
+        dom.secretIndicator.classList.add('hidden');
+      }
+    });
+
+    // Stack Selection Buttons
+    document.querySelectorAll('.stack-option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.stack-option-btn').forEach(b => {
+          b.classList.remove('border-amber-400', 'bg-amber-500/20', 'text-amber-200');
+          b.classList.add('border-stone-700', 'bg-stone-900', 'text-stone-300');
+        });
+        btn.classList.add('border-amber-400', 'bg-amber-500/20', 'text-amber-200');
+        
+        const stackChoice = btn.getAttribute('data-stack');
+        loadStack(stackChoice);
+        resetDeck();
+      });
+    });
+
+    // Quick Rigging Presets
+    document.getElementById('btn-force-preset-1').addEventListener('click', () => {
+      state.targetCard = { v: '4', s: '♣' };
+      state.targetNumber = 18;
+      updateTargetCardUI();
+      updateTargetNumberUI();
+      closeSecretPanel();
+    });
+
+    document.getElementById('btn-force-preset-2').addEventListener('click', () => {
+      state.targetCard = { v: 'A', s: '♠' };
+      state.targetNumber = 52;
+      updateTargetCardUI();
+      updateTargetNumberUI();
+      closeSecretPanel();
+    });
+
+    document.getElementById('btn-force-preset-3').addEventListener('click', () => {
+      state.targetCard = { v: '10', s: '♥' };
+      state.targetNumber = 7;
+      updateTargetCardUI();
+      updateTargetNumberUI();
+      closeSecretPanel();
+    });
+
+    /* ========================================================
+       11. INITIAL STARTUP
+       ======================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStack('mnemonica');
+      updateTargetCardUI();
+      updateTargetNumberUI();
+      renderDeckPile();
+      updateSecretCalculator();
+      dom.secretIndicator.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
